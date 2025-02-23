@@ -1,0 +1,197 @@
+basePath: /
+definitions:
+  domain.Booking:
+    description: Booking information
+    properties:
+      created_at:
+        type: string
+      id:
+        example: "20240319123456"
+        type: string
+      price:
+        example: 60000
+        type: number
+      service_id:
+        example: service456
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/domain.BookingStatus'
+        example: pending
+      user_id:
+        example: user123
+        type: string
+    type: object
+  domain.BookingRequest:
+    description: Booking creation request
+    properties:
+      price:
+        example: 60000
+        type: number
+      service_id:
+        example: service456
+        type: string
+      user_id:
+        example: user123
+        type: string
+    required:
+    - price
+    - service_id
+    - user_id
+    type: object
+  domain.BookingStatus:
+    description: Booking status enum
+    enum:
+    - pending
+    - confirmed
+    - rejected
+    - canceled
+    type: string
+    x-enum-comments:
+      StatusCanceled: Booking is canceled
+      StatusConfirmed: Booking is confirmed
+      StatusPending: Initial status
+      StatusRejected: Booking is rejected
+    x-enum-varnames:
+    - StatusPending
+    - StatusConfirmed
+    - StatusRejected
+    - StatusCanceled
+  handler.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+host: localhost:3000
+info:
+  contact:
+    email: your-email@domain.com
+    name: API Support
+  description: This is a booking service API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Booking API
+  version: "1.0"
+paths:
+  /bookings:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all bookings with optional sorting and filtering.
+        Sort by price or date, or default to ID. Filter high-value bookings (price
+        > 50,000).
+      parameters:
+      - description: Sort by field (price or date)
+        in: query
+        name: sort
+        type: string
+      - description: Filter high-value bookings (price > 50,000)
+        in: query
+        name: high-value
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Booking'
+            type: array
+      summary: List all bookings
+      tags:
+      - bookings
+    post:
+      consumes:
+      - application/json
+      description: Create a new booking with the provided details. A credit check
+        is performed for bookings with a price greater than 50,000.
+      parameters:
+      - description: Booking Request
+        in: body
+        name: booking
+        required: true
+        schema:
+          $ref: '#/definitions/domain.BookingRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Booking'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Create a new booking
+      tags:
+      - bookings
+  /bookings/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Cancel a booking by its ID. Cannot cancel confirmed bookings. The
+        booking is checked in both cache and repository.
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Cannot cancel confirmed booking
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "404":
+          description: Booking not found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Cancel a booking
+      tags:
+      - bookings
+    get:
+      consumes:
+      - application/json
+      description: Get a booking's details by its ID. The booking is retrieved from
+        cache first, then from the mock repository if not found.
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Booking'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.ErrorResponse'
+      summary: Get a booking by ID
+      tags:
+      - bookings
+swagger: "2.0"
