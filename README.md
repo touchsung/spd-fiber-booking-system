@@ -60,10 +60,13 @@ go test ./...
 
 ### Code Structure
 
-- **cmd/api**: Contains the main entry point for the application.
-- **internal/domain**: Defines the domain models.
-- **internal/handler**: Contains the HTTP handlers for the API endpoints.
-- **internal/middleware**: Middleware components for the application.
-- **internal/repository**: Mock repository for storing booking data.
-- **internal/service**: Business logic for managing bookings.
-- **internal/util**: Utility functions.
+- **cmd**: Contains the main entry point for the application.
+- **dto**: Data Transfer Objects used in the application.
+- **handler**: Contains the HTTP handlers for the API endpoints.
+- **middleware**: Middleware components for the application.
+- **models**: Defines the domain models.
+- **repository**: Repository layer for data access.
+- **router**: Defines the routes for the application.
+- **usecase**: Contains the business logic for managing bookings.
+- **utils**: Utility functions.
+- **docs**: Documentation files.

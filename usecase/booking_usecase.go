@@ -1,4 +1,4 @@
-package service
+package usecase
 
 import (
 	"fmt"
@@ -7,17 +7,17 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/touchsung/spd-fiber-booking-system/internal/domain"
-	"github.com/touchsung/spd-fiber-booking-system/internal/repository"
-	"github.com/touchsung/spd-fiber-booking-system/internal/util"
+	"github.com/touchsung/spd-fiber-booking-system/models"
+	"github.com/touchsung/spd-fiber-booking-system/repository"
+	"github.com/touchsung/spd-fiber-booking-system/utils"
 )
 
 type BookingService struct {
-	cache          *repository.InMemoryCache
+	cache          *utils.InMemoryCache
 	mockRepository *repository.MockRepository
 }
 
-func NewBookingService(cache *repository.InMemoryCache, mockRepo *repository.MockRepository) *BookingService {
+func NewBookingService(cache *utils.InMemoryCache, mockRepo *repository.MockRepository) *BookingService {
 	return &BookingService{
 		cache:          cache,
 		mockRepository: mockRepo,
@@ -28,16 +28,16 @@ func (s *BookingService) requiresCreditCheck(price float64) bool {
 	return price > 50000
 }
 
-func (s *BookingService) generateRandomStatus() domain.BookingStatus {
+func (s *BookingService) generateRandomStatus() models.BookingStatus {
 	if rand.Float64() < 0.5 {
-		return domain.StatusRejected
+		return models.StatusRejected
 	}
-	return domain.StatusConfirmed
+	return models.StatusConfirmed
 }
 
-func (s *BookingService) simulateCreditCheck(bookingID string) domain.CreditCheckResult {
+func (s *BookingService) simulateCreditCheck(bookingID string) models.CreditCheckResult {
 	time.Sleep(2 * time.Second)
-	return domain.CreditCheckResult{
+	return models.CreditCheckResult{
 		BookingID: bookingID,
 		Status:    s.generateRandomStatus(),
 	}
@@ -52,13 +52,13 @@ func checkExpiredTime(date time.Time) bool {
 	return date.Before(time.Now().Add(-5 * time.Minute))
 }
 
-func (s *BookingService) CreateBooking(request domain.BookingRequest) (*domain.Booking, error) {
-	booking := &domain.Booking{
-		ID:        util.GenerateID(),
+func (s *BookingService) CreateBooking(request models.BookingRequest) (*models.Booking, error) {
+	booking := &models.Booking{
+		ID:        utils.GenerateID(),
 		UserID:    request.UserID,
 		ServiceID: request.ServiceID,
 		Price:     request.Price,
-		Status:    domain.StatusPending,
+		Status:    models.StatusPending,
 	}
 
 	s.cache.SaveBooking(booking)
@@ -70,7 +70,7 @@ func (s *BookingService) CreateBooking(request domain.BookingRequest) (*domain.B
 	return booking, nil
 }
 
-func (s *BookingService) GetBooking(bookingID string) (*domain.Booking, error) {
+func (s *BookingService) GetBooking(bookingID string) (*models.Booking, error) {
 	// Try to get from cache first
 	if booking, exists := s.cache.GetBooking(bookingID); exists {
 		return booking, nil
@@ -86,26 +86,26 @@ func (s *BookingService) GetBooking(bookingID string) (*domain.Booking, error) {
 	return nil, fmt.Errorf("booking not found")
 }
 
-func (s *BookingService) ListBookings(sortBy *domain.SortOption, highValueOnly *bool) []*domain.Booking {
+func (s *BookingService) ListBookings(sortBy *models.SortOption, highValueOnly *bool) []*models.Booking {
 	// Get all bookings from cache and mock repository
-	allBookings := make([]*domain.Booking, 0)
+	allBookings := make([]*models.Booking, 0)
 	allBookings = append(allBookings, s.cache.GetAllBookings()...)
 	allBookings = append(allBookings, s.mockRepository.GetAllBookings()...)
 
 	// Remove duplicates
-	uniqueBookings := make(map[string]*domain.Booking)
+	uniqueBookings := make(map[string]*models.Booking)
 	for _, booking := range allBookings {
 		uniqueBookings[booking.ID] = booking
 	}
 
-	allBookings = make([]*domain.Booking, 0, len(uniqueBookings))
+	allBookings = make([]*models.Booking, 0, len(uniqueBookings))
 	for _, booking := range uniqueBookings {
 		allBookings = append(allBookings, booking)
 	}
 
 	// Filter high-value bookings if requested
 	if highValueOnly != nil && *highValueOnly {
-		filteredBookings := make([]*domain.Booking, 0)
+		filteredBookings := make([]*models.Booking, 0)
 		for _, booking := range allBookings {
 			if booking.Price > 50000 {
 				filteredBookings = append(filteredBookings, booking)
@@ -117,11 +117,11 @@ func (s *BookingService) ListBookings(sortBy *domain.SortOption, highValueOnly *
 	// Sort bookings
 	if sortBy != nil {
 		switch *sortBy {
-		case domain.SortByPrice:
+		case models.SortByPrice:
 			sort.Slice(allBookings, func(i, j int) bool {
 				return allBookings[i].Price < allBookings[j].Price
 			})
-		case domain.SortByDate:
+		case models.SortByDate:
 			sort.Slice(allBookings, func(i, j int) bool {
 				return allBookings[i].CreatedAt.Before(allBookings[j].CreatedAt)
 			})
@@ -145,7 +145,7 @@ func (s *BookingService) ListBookings(sortBy *domain.SortOption, highValueOnly *
 func (s *BookingService) CancelBooking(bookingID string) error {
 	// Try to get from cache first
 	if booking, exists := s.cache.GetBooking(bookingID); exists {
-		if booking.Status == domain.StatusConfirmed {
+		if booking.Status == models.StatusConfirmed {
 			return fmt.Errorf("cannot cancel a confirmed booking")
 		}
 		// Check if booking exists in mock repository before deleting
@@ -157,7 +157,7 @@ func (s *BookingService) CancelBooking(bookingID string) error {
 	}
 
 	// Update status in mock repository
-	if exists := s.mockRepository.UpdateBookingStatus(bookingID, domain.StatusCanceled); !exists {
+	if exists := s.mockRepository.UpdateBookingStatus(bookingID, models.StatusCanceled); !exists {
 		return fmt.Errorf("booking not found")
 	}
 
@@ -167,9 +167,9 @@ func (s *BookingService) CancelBooking(bookingID string) error {
 func (s *BookingService) CancelExpiredBookings() {
 	pendingBookings := s.cache.GetAllBookings()
 	for _, booking := range pendingBookings {
-		if booking.Status == domain.StatusPending && checkExpiredTime(booking.CreatedAt) {
-			s.cache.UpdateBookingStatus(booking.ID, domain.StatusCanceled)
-			s.mockRepository.UpdateBookingStatus(booking.ID, domain.StatusCanceled)
+		if booking.Status == models.StatusPending && checkExpiredTime(booking.CreatedAt) {
+			s.cache.UpdateBookingStatus(booking.ID, models.StatusCanceled)
+			s.mockRepository.UpdateBookingStatus(booking.ID, models.StatusCanceled)
 		}
 	}
 }

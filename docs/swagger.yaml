@@ -1,6 +1,11 @@
 basePath: /
 definitions:
-  domain.Booking:
+  handler.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  models.Booking:
     description: Booking information
     properties:
       created_at:
@@ -16,13 +21,13 @@ definitions:
         type: string
       status:
         allOf:
-        - $ref: '#/definitions/domain.BookingStatus'
+        - $ref: '#/definitions/models.BookingStatus'
         example: pending
       user_id:
         example: user123
         type: string
     type: object
-  domain.BookingRequest:
+  models.BookingRequest:
     description: Booking creation request
     properties:
       price:
@@ -39,7 +44,7 @@ definitions:
     - service_id
     - user_id
     type: object
-  domain.BookingStatus:
+  models.BookingStatus:
     description: Booking status enum
     enum:
     - pending
@@ -57,20 +62,10 @@ definitions:
     - StatusConfirmed
     - StatusRejected
     - StatusCanceled
-  handler.ErrorResponse:
-    properties:
-      error:
-        type: string
-    type: object
 host: localhost:3000
 info:
-  contact:
-    email: your-email@domain.com
-    name: API Support
+  contact: {}
   description: This is a booking service API
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
   title: Booking API
   version: "1.0"
@@ -98,7 +93,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.Booking'
+              $ref: '#/definitions/models.Booking'
             type: array
       summary: List all bookings
       tags:
@@ -114,14 +109,14 @@ paths:
         name: booking
         required: true
         schema:
-          $ref: '#/definitions/domain.BookingRequest'
+          $ref: '#/definitions/models.BookingRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/domain.Booking'
+            $ref: '#/definitions/models.Booking'
         "400":
           description: Bad Request
           schema:
@@ -182,7 +177,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.Booking'
+            $ref: '#/definitions/models.Booking'
         "404":
           description: Not Found
           schema:

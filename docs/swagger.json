@@ -4,14 +4,7 @@
         "description": "This is a booking service API",
         "title": "Booking API",
         "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "email": "your-email@domain.com"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        },
+        "contact": {},
         "version": "1.0"
     },
     "host": "localhost:3000",
@@ -50,7 +43,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/domain.Booking"
+                                "$ref": "#/definitions/models.Booking"
                             }
                         }
                     }
@@ -75,7 +68,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.BookingRequest"
+                            "$ref": "#/definitions/models.BookingRequest"
                         }
                     }
                 ],
@@ -83,7 +76,7 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/domain.Booking"
+                            "$ref": "#/definitions/models.Booking"
                         }
                     },
                     "400": {
@@ -127,7 +120,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/domain.Booking"
+                            "$ref": "#/definitions/models.Booking"
                         }
                     },
                     "404": {
@@ -192,7 +185,15 @@
         }
     },
     "definitions": {
-        "domain.Booking": {
+        "handler.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Booking": {
             "description": "Booking information",
             "type": "object",
             "properties": {
@@ -214,7 +215,7 @@
                 "status": {
                     "allOf": [
                         {
-                            "$ref": "#/definitions/domain.BookingStatus"
+                            "$ref": "#/definitions/models.BookingStatus"
                         }
                     ],
                     "example": "pending"
@@ -225,7 +226,7 @@
                 }
             }
         },
-        "domain.BookingRequest": {
+        "models.BookingRequest": {
             "description": "Booking creation request",
             "type": "object",
             "required": [
@@ -248,7 +249,7 @@
                 }
             }
         },
-        "domain.BookingStatus": {
+        "models.BookingStatus": {
             "description": "Booking status enum",
             "type": "string",
             "enum": [
@@ -269,14 +270,6 @@
                 "StatusRejected",
                 "StatusCanceled"
             ]
-        },
-        "handler.ErrorResponse": {
-            "type": "object",
-            "properties": {
-                "error": {
-                    "type": "string"
-                }
-            }
         }
     }
 }

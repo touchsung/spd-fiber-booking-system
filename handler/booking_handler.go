@@ -1,17 +1,17 @@
 package handler
 
 import (
-	"github.com/touchsung/spd-fiber-booking-system/internal/domain"
-	"github.com/touchsung/spd-fiber-booking-system/internal/service"
+	"github.com/touchsung/spd-fiber-booking-system/models"
+	"github.com/touchsung/spd-fiber-booking-system/usecase"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 type BookingHandler struct {
-	bookingService *service.BookingService
+	bookingService *usecase.BookingService
 }
 
-func NewBookingHandler(bookingService *service.BookingService) *BookingHandler {
+func NewBookingHandler(bookingService *usecase.BookingService) *BookingHandler {
 	return &BookingHandler{bookingService: bookingService}
 }
 
@@ -21,13 +21,13 @@ func NewBookingHandler(bookingService *service.BookingService) *BookingHandler {
 // @Tags bookings
 // @Accept json
 // @Produce json
-// @Param booking body domain.BookingRequest true "Booking Request"
-// @Success 201 {object} domain.Booking
+// @Param booking body models.BookingRequest true "Booking Request"
+// @Success 201 {object} models.Booking
 // @Failure 400 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /bookings [post]
 func (h *BookingHandler) Create(c *fiber.Ctx) error {
-	var request domain.BookingRequest
+	var request models.BookingRequest
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(400).JSON(ErrorResponse{
 			Error: "Invalid request body",
@@ -51,7 +51,7 @@ func (h *BookingHandler) Create(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param id path string true "Booking ID"
-// @Success 200 {object} domain.Booking
+// @Success 200 {object} models.Booking
 // @Failure 404 {object} ErrorResponse
 // @Failure 500 {object} ErrorResponse
 // @Router /bookings/{id} [get]
@@ -76,18 +76,18 @@ func (h *BookingHandler) GetBooking(c *fiber.Ctx) error {
 // @Produce json
 // @Param sort query string false "Sort by field (price or date)"
 // @Param high-value query bool false "Filter high-value bookings (price > 50,000)"
-// @Success 200 {array} domain.Booking
+// @Success 200 {array} models.Booking
 // @Router /bookings [get]
 func (h *BookingHandler) ListBookings(c *fiber.Ctx) error {
 	// Parse query parameters
-	var sortBy *domain.SortOption
+	var sortBy *models.SortOption
 	if sort := c.Query("sort"); sort != "" {
 		switch sort {
 		case "price":
-			option := domain.SortByPrice
+			option := models.SortByPrice
 			sortBy = &option
 		case "date":
-			option := domain.SortByDate
+			option := models.SortByDate
 			sortBy = &option
 		}
 	}

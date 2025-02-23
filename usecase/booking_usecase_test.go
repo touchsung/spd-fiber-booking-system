@@ -1,16 +1,17 @@
-package service
+package usecase
 
 import (
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/touchsung/spd-fiber-booking-system/internal/domain"
-	"github.com/touchsung/spd-fiber-booking-system/internal/repository"
+	"github.com/touchsung/spd-fiber-booking-system/models"
+	"github.com/touchsung/spd-fiber-booking-system/repository"
+	"github.com/touchsung/spd-fiber-booking-system/utils"
 )
 
 func setupTestService() *BookingService {
-	cache := repository.NewInMemoryCache()
+	cache := utils.NewInMemoryCache()
 	mockRepo := repository.NewMockRepository()
 	service := NewBookingService(cache, mockRepo)
 	service.mockRepository = mockRepo
@@ -45,7 +46,7 @@ func TestGenerateRandomStatus(t *testing.T) {
 	service := setupTestService()
 
 	// Run multiple times to ensure both statuses are generated
-	statusCounts := make(map[domain.BookingStatus]int)
+	statusCounts := make(map[models.BookingStatus]int)
 	iterations := 1000
 
 	for i := 0; i < iterations; i++ {
@@ -54,8 +55,8 @@ func TestGenerateRandomStatus(t *testing.T) {
 	}
 
 	// Check that both statuses were generated
-	assert.True(t, statusCounts[domain.StatusRejected] > 0, "Expected StatusRejected to be generated")
-	assert.True(t, statusCounts[domain.StatusConfirmed] > 0, "Expected StatusConfirmed to be generated")
+	assert.True(t, statusCounts[models.StatusRejected] > 0, "Expected StatusRejected to be generated")
+	assert.True(t, statusCounts[models.StatusConfirmed] > 0, "Expected StatusConfirmed to be generated")
 }
 
 func TestCreateBooking(t *testing.T) {
@@ -63,11 +64,11 @@ func TestCreateBooking(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		request domain.BookingRequest
+		request models.BookingRequest
 	}{
 		{
 			name: "normal booking",
-			request: domain.BookingRequest{
+			request: models.BookingRequest{
 				UserID:    "user1",
 				ServiceID: "service1",
 				Price:     40000,
@@ -75,7 +76,7 @@ func TestCreateBooking(t *testing.T) {
 		},
 		{
 			name: "high-value booking",
-			request: domain.BookingRequest{
+			request: models.BookingRequest{
 				UserID:    "user2",
 				ServiceID: "service2",
 				Price:     60000,
@@ -92,7 +93,7 @@ func TestCreateBooking(t *testing.T) {
 			assert.Equal(t, tt.request.UserID, booking.UserID)
 			assert.Equal(t, tt.request.ServiceID, booking.ServiceID)
 			assert.Equal(t, tt.request.Price, booking.Price)
-			assert.Equal(t, domain.StatusPending, booking.Status)
+			assert.Equal(t, models.StatusPending, booking.Status)
 		})
 	}
 }
@@ -101,7 +102,7 @@ func TestGetBooking(t *testing.T) {
 	service := setupTestService()
 
 	// Create a test booking
-	request := domain.BookingRequest{
+	request := models.BookingRequest{
 		UserID:    "user1",
 		ServiceID: "service1",
 		Price:     40000,
@@ -128,23 +129,23 @@ func TestListBookings(t *testing.T) {
 	service := setupTestService()
 
 	// Add bookings to cache
-	service.cache.SaveBooking(&domain.Booking{
+	service.cache.SaveBooking(&models.Booking{
 		ID:        "1",
 		UserID:    "user1",
 		ServiceID: "service1",
 		Price:     60000,
 		CreatedAt: time.Now().Add(-24 * time.Hour),
-		Status:    domain.StatusPending,
+		Status:    models.StatusPending,
 	})
 
 	// Add bookings to mock repository
-	service.mockRepository.SaveBooking(&domain.Booking{
+	service.mockRepository.SaveBooking(&models.Booking{
 		ID:        "2",
 		UserID:    "user2",
 		ServiceID: "service2",
 		Price:     40000,
 		CreatedAt: time.Now().Add(-48 * time.Hour),
-		Status:    domain.StatusPending,
+		Status:    models.StatusPending,
 	})
 
 	// Test without filters
@@ -159,12 +160,12 @@ func TestListBookings(t *testing.T) {
 	assert.Equal(t, "1", bookings[0].ID, "Expected booking ID 1")
 
 	// Test sorting by price
-	sortByPrice := domain.SortByPrice
+	sortByPrice := models.SortByPrice
 	bookings = service.ListBookings(&sortByPrice, nil)
 	assert.Equal(t, "2", bookings[0].ID, "Expected booking ID 2 to be first when sorted by price")
 
 	// Test sorting by date
-	sortByDate := domain.SortByDate
+	sortByDate := models.SortByDate
 	bookings = service.ListBookings(&sortByDate, nil)
 	assert.Equal(t, "2", bookings[0].ID, "Expected booking ID 2 to be first when sorted by date")
 }
@@ -173,23 +174,23 @@ func TestCancelBooking(t *testing.T) {
 	service := setupTestService()
 
 	// Create a pending booking
-	pendingBooking := &domain.Booking{
+	pendingBooking := &models.Booking{
 		ID:        "pending-booking",
 		UserID:    "user1",
 		ServiceID: "service1",
 		Price:     40000,
-		Status:    domain.StatusPending,
+		Status:    models.StatusPending,
 	}
 	service.cache.SaveBooking(pendingBooking)
 	service.mockRepository.SaveBooking(pendingBooking)
 
 	// Create a confirmed booking
-	confirmedBooking := &domain.Booking{
+	confirmedBooking := &models.Booking{
 		ID:        "confirmed-booking",
 		UserID:    "user2",
 		ServiceID: "service2",
 		Price:     60000,
-		Status:    domain.StatusConfirmed,
+		Status:    models.StatusConfirmed,
 	}
 	service.cache.SaveBooking(confirmedBooking)
 	service.mockRepository.SaveBooking(confirmedBooking)
@@ -211,20 +212,20 @@ func TestCancelExpiredBookings(t *testing.T) {
 	service := setupTestService()
 
 	// Create bookings with different creation times
-	nonExpiredBooking := &domain.Booking{
+	nonExpiredBooking := &models.Booking{
 		ID:        "non-expired-booking",
 		UserID:    "user1",
 		ServiceID: "service1",
 		Price:     40000,
-		Status:    domain.StatusPending,
+		Status:    models.StatusPending,
 		CreatedAt: time.Now(),
 	}
-	expiredBooking := &domain.Booking{
+	expiredBooking := &models.Booking{
 		ID:        "expired-booking",
 		UserID:    "user2",
 		ServiceID: "service2",
 		Price:     60000,
-		Status:    domain.StatusPending,
+		Status:    models.StatusPending,
 		CreatedAt: time.Now().Add(-10 * time.Minute), // Set to expired
 	}
 
@@ -237,9 +238,9 @@ func TestCancelExpiredBookings(t *testing.T) {
 
 	// Verify non-expired booking is still pending
 	updatedNonExpiredBooking, _ := service.cache.GetBooking(nonExpiredBooking.ID)
-	assert.Equal(t, domain.StatusPending, updatedNonExpiredBooking.Status, "Expected non-expired booking to remain pending")
+	assert.Equal(t, models.StatusPending, updatedNonExpiredBooking.Status, "Expected non-expired booking to remain pending")
 
 	// Verify expired booking is canceled
 	updatedExpiredBooking, _ := service.cache.GetBooking(expiredBooking.ID)
-	assert.Equal(t, domain.StatusCanceled, updatedExpiredBooking.Status, "Expected expired booking to be canceled")
+	assert.Equal(t, models.StatusCanceled, updatedExpiredBooking.Status, "Expected expired booking to be canceled")
 }

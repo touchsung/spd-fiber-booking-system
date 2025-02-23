@@ -10,14 +10,7 @@ const docTemplate = `{
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
         "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "email": "your-email@domain.com"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        },
+        "contact": {},
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -56,7 +49,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/domain.Booking"
+                                "$ref": "#/definitions/models.Booking"
                             }
                         }
                     }
@@ -81,7 +74,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/domain.BookingRequest"
+                            "$ref": "#/definitions/models.BookingRequest"
                         }
                     }
                 ],
@@ -89,7 +82,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/domain.Booking"
+                            "$ref": "#/definitions/models.Booking"
                         }
                     },
                     "400": {
@@ -133,7 +126,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/domain.Booking"
+                            "$ref": "#/definitions/models.Booking"
                         }
                     },
                     "404": {
@@ -198,7 +191,15 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "domain.Booking": {
+        "handler.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Booking": {
             "description": "Booking information",
             "type": "object",
             "properties": {
@@ -220,7 +221,7 @@ const docTemplate = `{
                 "status": {
                     "allOf": [
                         {
-                            "$ref": "#/definitions/domain.BookingStatus"
+                            "$ref": "#/definitions/models.BookingStatus"
                         }
                     ],
                     "example": "pending"
@@ -231,7 +232,7 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.BookingRequest": {
+        "models.BookingRequest": {
             "description": "Booking creation request",
             "type": "object",
             "required": [
@@ -254,7 +255,7 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.BookingStatus": {
+        "models.BookingStatus": {
             "description": "Booking status enum",
             "type": "string",
             "enum": [
@@ -275,14 +276,6 @@ const docTemplate = `{
                 "StatusRejected",
                 "StatusCanceled"
             ]
-        },
-        "handler.ErrorResponse": {
-            "type": "object",
-            "properties": {
-                "error": {
-                    "type": "string"
-                }
-            }
         }
     }
 }`
