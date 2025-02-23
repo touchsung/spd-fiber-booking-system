@@ -33,7 +33,7 @@ The API is documented using Swagger. You can access the Swagger UI at `/swagger/
 
 3. **Run the application**:
    ```bash
-   go run cmd/api/main.go
+   go run cmd/main.go
    ```
 
 ## Usage
